@@ -535,6 +535,18 @@ namespace AasxRestServerLibrary
             context.Response.SendResponse(buffer);
         }
 
+        protected static void SendRedirectResponse(Grapevine.Interfaces.Server.IHttpContext context, string redirectUrl)
+        {
+            context.Response.AppendHeader("redirectInfo", "URL");
+            //context.Response.Redirect("http://localhost:51000/redirect?=http://localhost:51000/Discovery");
+            context.Response.Redirect(redirectUrl);
+            //context.Response.SendResponse(HttpStatusCode.TemporaryRedirect,"http://www.google.com");
+            //context.Response.ContentType=
+            context.Response.SendResponse(HttpStatusCode.TemporaryRedirect, "redirectUrl");
+            //string authenServerUrl=@"123redirect=http://localhost:51000/";
+            //SendTextResponse(context,authenServerUrl);
+        }
+
         protected static void SendTextResponse(Grapevine.Interfaces.Server.IHttpContext context, string txt, string mimeType = null)
         {
             context.Response.ContentType = ContentType.TEXT;
@@ -1412,7 +1424,7 @@ namespace AasxRestServerLibrary
             }
 
             // return as JSON
-            var cr = new AdminShellConverters.AdaptiveFilterContractResolver( deep: deep, complete: complete);
+            var cr = new AdminShellConverters.AdaptiveFilterContractResolver(deep: deep, complete: complete);
             SendJsonResponse(context, sme, cr);
         }
 
@@ -2591,9 +2603,8 @@ namespace AasxRestServerLibrary
                         {
                             return null;
                         }
-
                         user = parsed2.SelectToken("userName").Value<string>();
-
+                        Console.WriteLine("userName:" + user);
                         if (securityRightsName != null)
                         {
                             int rightsCount = securityRightsName.Length;
@@ -2703,10 +2714,15 @@ namespace AasxRestServerLibrary
                 Console.WriteLine("Security 4.2 Server: Validate that bearer token is signed by token server certificate");
                 string accessrights = SecurityCheck(context, ref index);
 
+                Console.WriteLine(context.Request.RawUrl);
+                // string[] queryString=context.Request.RawUrl.Split(new char[] { '?' });
+                // Console.WriteLine(queryString[1]);
+
+                Console.WriteLine(accessrights);
                 if (accessrights == null)
                 {
-                    res.error = "You are not authorized for this operation!";
-                    SendJsonResponse(context, res);
+                    SendRedirectResponse(context, "http://localhost:51000/redirect?=http://localhost:51000");
+
                     return;
                 }
 
@@ -2856,6 +2872,7 @@ namespace AasxRestServerLibrary
         public static string[] serverCertfileNames;
         public static X509Certificate2[] serverCerts;
 
+        //initial security
         public static void securityInit()
         {
             withAuthentification = true;
