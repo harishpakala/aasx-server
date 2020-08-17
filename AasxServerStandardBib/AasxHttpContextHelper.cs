@@ -542,7 +542,7 @@ namespace AasxRestServerLibrary
             context.Response.Redirect(redirectUrl);
             //context.Response.SendResponse(HttpStatusCode.TemporaryRedirect,"http://www.google.com");
             //context.Response.ContentType=
-            context.Response.SendResponse(HttpStatusCode.TemporaryRedirect, "redirectUrl");
+            context.Response.SendResponse(HttpStatusCode.TemporaryRedirect, redirectUrl);
             //string authenServerUrl=@"123redirect=http://localhost:51000/";
             //SendTextResponse(context,authenServerUrl);
         }
@@ -2558,13 +2558,14 @@ namespace AasxRestServerLibrary
                 }
             }
             else // check query string for bearer token
-            {
-                split = context.Request.Url.ToString().Split(new char[] { '?' });
-                if (split != null && split.Length > 1 && split[1] != null)
-                {
-                    // Console.WriteLine();
-                    Console.WriteLine("Received query string = " + split[1]);
-                    bearerToken = split[1];
+            {   //TODO rework if there are multiple query parameters
+                if (context.Request.QueryString.Count>=1)
+                {   var queryString=context.Request.QueryString;
+                    bearerToken=queryString[0];
+                    for (int i=0;i<queryString.Count;i++)
+                    {
+                         Console.WriteLine("Query Unit:"+queryString.GetKey(i)+" Query Value:"+queryString.Get(i));
+                    }
                 }
             }
 
@@ -2714,15 +2715,18 @@ namespace AasxRestServerLibrary
                 Console.WriteLine("Security 4.2 Server: Validate that bearer token is signed by token server certificate");
                 string accessrights = SecurityCheck(context, ref index);
 
-                Console.WriteLine(context.Request.RawUrl);
+                
                 // string[] queryString=context.Request.RawUrl.Split(new char[] { '?' });
                 // Console.WriteLine(queryString[1]);
 
                 Console.WriteLine(accessrights);
                 if (accessrights == null)
-                {
-                    SendRedirectResponse(context, "http://localhost:51000/redirect?=http://localhost:51000");
-
+                {   
+                    System.Collections.Specialized.NameValueCollection queryString= System.Web.HttpUtility.ParseQueryString(string.Empty);
+                    string originalRequest =  context.Request.Url.ToString();
+                    queryString.Add("OriginalRequest",originalRequest);
+                    Console.WriteLine("OriginalRequset:"+originalRequest);
+                    SendRedirectResponse(context, "http://localhost:51000/Discovery"+"?"+queryString);
                     return;
                 }
 
