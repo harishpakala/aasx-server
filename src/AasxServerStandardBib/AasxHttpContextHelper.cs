@@ -544,19 +544,13 @@ namespace AasxRestServerLibrary
             context.Response.SendResponse(txt);
         }
 
-        protected static void SendStreamResponse(IHttpContext context, Stream stream, 
-            string headerAttachmentFileName = null,
-            bool sendContentLength = false)
+        protected static void SendStreamResponse(IHttpContext context, Stream stream,
+            string headerAttachmentFileName = null)
         {
             context.Response.ContentType = ContentType.APPLICATION;
             context.Response.ContentLength64 = stream.Length;
             context.Response.SendChunked = true;
 
-            if (sendContentLength)
-            {
-                // context.Response.AddHeader("Content-Length", "" + stream.Length);
-                // context.Response.Headers.Add("Content-Length", "" + stream.Length);
-            }
             if (headerAttachmentFileName != null)
                 context.Response.AddHeader("Content-Disposition", $"attachment; filename={headerAttachmentFileName}");
 
@@ -1752,7 +1746,7 @@ namespace AasxRestServerLibrary
             SendTextResponse(context, smeb.value, mimeType: smeb.mimeType);
         }
 
-        private string EvalGetSubmodelElementsProperty_EvalValue (AdminShell.Property smep) 
+        private string EvalGetSubmodelElementsProperty_EvalValue(AdminShell.Property smep)
         {
             // access
             if (smep == null)
@@ -1772,7 +1766,7 @@ namespace AasxRestServerLibrary
             return strval;
         }
 
-        private List<ExpandoObject> EvalGetSubmodelElementsProperty_EvalValues (
+        private List<ExpandoObject> EvalGetSubmodelElementsProperty_EvalValues(
             AdminShell.SubmodelElementWrapperCollection wrappers)
         {
             // access
@@ -1832,7 +1826,7 @@ namespace AasxRestServerLibrary
             {
                 context.Response.SendResponse(HttpStatusCode.NotFound, $"No AAS '{aasid}' or no Submodel with idShort '{smid}' found.");
                 return;
-            }                    
+            }
 
             // Submodel or SME?
             if (elemids == null || elemids.Length < 1)
@@ -1846,7 +1840,7 @@ namespace AasxRestServerLibrary
                 var fse = this.FindSubmodelElement(sm, sm.submodelElements, elemids);
 
                 if (fse?.elem is AdminShell.SubmodelElementCollection smec)
-                {                   
+                {
                     res.values = EvalGetSubmodelElementsProperty_EvalValues(smec.value);
                 }
                 else if (fse?.elem is AdminShell.Property smep)
@@ -3140,9 +3134,8 @@ namespace AasxRestServerLibrary
             // return as FILE
             FileStream packageStream = File.OpenRead(AasxServer.Program.envFileName[fileIndex]);
 
-            SendStreamResponse(context, packageStream, 
-                Path.GetFileName(AasxServer.Program.envFileName[fileIndex]),
-                sendContentLength: true);
+            SendStreamResponse(context, packageStream,
+                Path.GetFileName(AasxServer.Program.envFileName[fileIndex]));
             packageStream.Close();
         }
 
